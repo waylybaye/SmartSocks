@@ -1,14 +1,44 @@
 #!/bin/env python
-
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import SocketServer
+import os
+import json
+import atexit
+import signal
 import base64
 import subprocess
+
+import SocketServer
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+
+
+def socks_command(payload):
+    return "ss-server -k pass -m chacha20 -u -p 1080"
+    supported_servers = ['ss', 'ssr', 'v2ray']
+    ports = os.environ.get('PORTS')
+    servers = os.environ.get('SERVERS', '').strip().split(',') or ['ss', 'ssr', '']
+
+    if not ports:
+        print("PORTS required")
+        return
+
+    elif not ''.join(ports.split(',')).isdigit():
+        print("PORTS must be interger")
+        return
+
+    if set(servers) - set(supported_servers):
+        print("Unsupported server: ", ','.join(set(servers) - set(supported_servers)))
+        return
+
+    ports = ports.split(',')
+
+    for server in servers:
+        for port in ports:
+            start_server(server, port)
 
 
 class Server(BaseHTTPRequestHandler):
     username = ""
     password = ""
+    latest_process = None
 
     def _set_headers(self):
         self.send_response(200)
@@ -55,9 +85,43 @@ class Server(BaseHTTPRequestHandler):
             self.response(401, "Invalid Authentication.")
             return
 
-        print("headers", self.headers.items())
-        # Doesn't do anything with posted data
-        print("path", self.path)
+        content_length = int(self.headers.get('content-length', '0'))
+        payload = self.rfile.read(content_length)
+        if not payload:
+            self.response(406, "Payload required.")
+            return
+
+        try:
+            payload = json.loads(payload)
+        except ValueError:
+            self.response(406, "Payload invalid.")
+            return
+
+        if Server.latest_process:
+            print("[SmartSocks] closing previous socks")
+            try:
+                os.killpg(os.getpgid(Server.latest_process.pid), signal.SIGTERM)
+            except OSError:
+                pass
+
+            Server.latest_process = None
+
+        try:
+            command = socks_command(payload)
+        except ValueError:
+            self.response(406, "Unsupported socks")
+            return
+
+        print("[SmartSocks] starting socks server")
+        popen = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            shell=True, preexec_fn=os.setsid)
+
+        atexit.register(popen.terminate)
+
+        Server.latest_process = popen
+
         self._set_headers()
         self.wfile.write("<html><body><h1>POST!</h1></body></html>")
 
