@@ -1,4 +1,12 @@
 V2RAY_VER = "2.33.1"
+DIRECTORY = "smartsocks"
+
+if ! [ -d $DIRECTORY ]; then
+  echo "Make Directory $DIRECTORY"
+  mkdir $DIRECTORY
+fi
+
+cd $DIRECTORY
 
 if ! [ -d shadowsocksr ]; then
   echo "Downloading ShadowsocksR ..."
@@ -12,4 +20,7 @@ if ! [ -f v2ray/v2ray ]; then
 fi
 
 echo "Downloading SmarkSocks client ..."
-curl https://raw.githubusercontent.com/waylybaye/SmartSocks/master/LICENSE > smart_socks.py
+curl https://raw.githubusercontent.com/waylybaye/SmartSocks/master/client.py > smart_socks.py
+curl https://raw.githubusercontent.com/waylybaye/SmartSocks/master/speedtest.py > speedtest.py
+
+python smart_socks.py

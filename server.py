@@ -75,7 +75,6 @@ class Server(BaseHTTPRequestHandler):
             tuples = auth.split(':')
             user = tuples[0]
             password = tuples[1] if len(tuples) > 1 else ''
-            print auth, self.username, self.password
 
             if user != self.username or password != self.password:
                 self.response(401, "Authentication Failed.")
