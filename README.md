@@ -8,7 +8,7 @@ SmartSocks 是一个服务端和客户端自动协商最快传输协议的工具
 ## 支持的应用
 
 - [x] shadowsocksR
-- [x] V2Ray
+- [x] V2Ray (tcp & kcp)
 - [ ] kcptun (TODO)
 
 ### TODO
@@ -21,7 +21,7 @@ SmartSocks 是一个服务端和客户端自动协商最快传输协议的工具
 
 ### 安装
 
-在 `HyperApp → 商店 → 网络` 分组下面找到 `SmartSocks` 安装，胚子时只要填入一个主控端口，和用户名密码即可。
+在 `HyperApp → 商店 → 网络` 分组下面找到 `SmartSocks` 安装，配置时只要填入一个主控端口，和用户名密码即可。
 
 
 ## 客户端
@@ -32,7 +32,7 @@ SmartSocks 是一个服务端和客户端自动协商最快传输协议的工具
 
 #### 下载依赖
 
-`curl -sL https://raw.githubusercontent.com/waylybaye/SmartSocks/master/install_client.sh | bashh`
+`curl -sL https://raw.githubusercontent.com/waylybaye/SmartSocks/master/install_client.sh | bash`
 
 #### 使用方法
 
