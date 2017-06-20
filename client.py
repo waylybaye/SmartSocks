@@ -224,7 +224,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
     print(darkgrey + "Starting %s client:" % socks_server)
     if socks_server == 'shadowsocksr':
         path = os.path.join(BASE_DIR, 'shadowsocksr/shadowsocks/local.py')
-        command = 'python %s  -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
+        command = 'python %s -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
             path, server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
 
@@ -248,7 +248,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        # stderr=subprocess.PIPE,
         shell=True,
         preexec_fn=os.setsid
     )
@@ -317,7 +317,7 @@ def main():
                         sock.connect(('localhost', LOCAL_PORT))
                         sock.close()
                         print(green + 'Local port started ...', reset)
-                        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "localhost", LOCAL_PORT)
+                        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", LOCAL_PORT)
                         time.sleep(0.2)
                         break
                     except socket.error:

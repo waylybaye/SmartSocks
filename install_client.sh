@@ -18,6 +18,7 @@ if ! [ -f v2ray ]; then
   curl -o v2ray.zip -L https://github.com/v2ray/v2ray-core/releases/download/v${V2RAY_VER}/v2ray-macos.zip || exit 1
   unzip v2ray.zip -d tmp
   mv tmp/v2ray-v${V2RAY_VER}-macos/v2ray v2ray
+  chmod +x v2ray
   rm -rf tmp
   rm v2ray.zip
 fi
