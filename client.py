@@ -5,13 +5,14 @@ from __future__ import unicode_literals, print_function
 import os
 import json
 import time
+import uuid
 import atexit
 import base64
 import signal
 import itertools
 import subprocess
 
-LOCAL_PORT = 1117
+LOCAL_PORT = 1118
 
 import socks
 import socket
@@ -44,18 +45,32 @@ lightgrey = '\033[37m'
 darkgrey = '\033[90m'
 
 suggested_plans = {
-    'shadowsocksr': [
+    # 'shadowsocksr': [
+    #     {
+    #         'name': 'ShadowsocksR auth_chain_a + none * OBFS',
+    #         'protocol': 'auth_chain_a',
+    #         'encrypt': 'none',
+    #         'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
+    #     },
+    #     {
+    #         'name': 'ShadowsocksR [chacha20, rc4-md5] + auth_aes128_md5 * OBFS',
+    #         'protocol': 'auth_aes128_md5',
+    #         'encrypt': ['chacha20', 'rc4-md5'],
+    #         'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
+    #     }
+    # ],
+    'v2ray': [
         {
-            'name': 'ShadowsocksR auth_chain_a + none * OBFS',
-            'protocol': 'auth_chain_a',
-            'encrypt': 'none',
-            'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
+            'name': 'V2Ray VMess tcp * [none, http]',
+            'uuid': str(uuid.uuid4()),
+            'network': 'tcp',
+            'obfs': ['none', 'http']
         },
         {
-            'name': 'ShadowsocksR [chacha20, rc4-md5] + auth_aes128_md5 * OBFS',
-            'protocol': 'auth_aes128_md5',
-            'encrypt': ['chacha20', 'rc4-md5'],
-            'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
+            'name': 'V2Ray VMess kcp',
+            'uuid': str(uuid.uuid4()),
+            'network': 'kcp',
+            'obfs': 'none',
         }
     ]
 }
@@ -161,7 +176,8 @@ def main():
                         time.sleep(0.1)
                         continue
                 else:
-                    print(red + 'Client no response ...', reset)
+                    print(red + 'Client no response, skip ...', reset)
+                    continue
 
                 try:
                     if not speedtest_servers:
