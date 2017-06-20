@@ -2,21 +2,26 @@
 # encoding: utf8
 from __future__ import unicode_literals, print_function
 
-import base64
-import json
 import os
-import atexit
-import socket
-import signal
-import subprocess
-import httplib
-import urllib2
-
-import itertools
-
+import json
 import time
+import atexit
+import base64
+import signal
+import itertools
+import subprocess
+
+LOCAL_PORT = 1117
 
 import socks
+import socket
+# socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", LOCAL_PORT)
+# socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 19870)
+raw_socket = socket.socket
+socket.socket = socks.socksocket
+
+import httplib
+import urllib2
 import speedtest
 
 
@@ -26,7 +31,6 @@ except ImportError:
     from optparse import OptionParser as ArgParser
 
 __VERSION__ = '0.0.1'
-LOCAL_PORT = 1117
 LATEST_PROCESS = None
 reset = '\033[0m'
 red = '\033[31m'
@@ -77,7 +81,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
 
     print("Starting %s client" % socks_server)
     if socks_server == 'shadowsocksr':
-        command = 'python ../../code/shadowsocksr/shadowsocks/local.py -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
+        command = 'python ../../code/shadowsocksr/shadowsocks/local.py -v -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
             server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
         # print("客户端:", orange, command, reset)
@@ -101,7 +105,7 @@ def main():
         print(__VERSION__)
         return
 
-    socket.socket = socks.socksocket
+
 
     speed = None
     speedtest_servers = []
@@ -121,11 +125,11 @@ def main():
                 choices.append(values if isinstance(values, (tuple, list)) else [values])
 
             for choice in itertools.product(*choices):
-                socks.setdefaultproxy()
                 payload = dict(zip(params, choice))
                 print("子配置:", orange, payload, reset)
 
                 try:
+                    socks.setdefaultproxy()
                     start_socks(
                         args.server,
                         args.port,
@@ -141,19 +145,26 @@ def main():
                     continue
 
                 for x in range(20):
-                    sock = socket.socket()
+                    sock = raw_socket()
                     try:
                         sock.connect(('127.0.0.1', LOCAL_PORT))
                         sock.close()
                         print(green + 'Client started ...', reset)
+                        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", LOCAL_PORT)
+                        time.sleep(0.2)
                         break
-                    except:
+                    except socket.error:
                         time.sleep(0.1)
                         continue
                 else:
                     print(red + 'Client no response ...', reset)
 
-                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", LOCAL_PORT)
+                # print('get ip')
+                # url = 'http://ifconfig.me/ip'
+                # request = urllib2.Request(url)
+                # request.add_header('Cache-Control', 'max-age=0')
+                # response = urllib2.urlopen(request)
+                # print(response.read())
 
                 try:
                     if not speedtest_servers:
