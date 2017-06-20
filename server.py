@@ -7,7 +7,14 @@ import signal
 import base64
 import subprocess
 
+try:
+    from argparse import ArgumentParser as ArgParser
+except ImportError:
+    from optparse import OptionParser as ArgParser
+
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+
+__VERSION__ = '0.0.1'
 
 
 def socks_command(payload):
@@ -123,7 +130,7 @@ class Server(BaseHTTPRequestHandler):
 
 
 def run(server_class=HTTPServer, handler_class=Server, port=80, username="", password=""):
-    server_address = ('', port)
+    server_address = ('', int(port))
     handler_class.username = username
     handler_class.password = password
     httpd = server_class(server_address, handler_class)
@@ -132,10 +139,34 @@ def run(server_class=HTTPServer, handler_class=Server, port=80, username="", pas
     httpd.serve_forever()
 
 
-if __name__ == "__main__":
-    from sys import argv
+def parse_args():
+    description = "SmartSocks Server"
+    parser = ArgParser(description=description)
+    try:
+        parser.add_argument = parser.add_option
+    except AttributeError:
+        pass
 
-    if len(argv) == 2:
-        run(port=int(argv[1]), username="admin", password="admin")
+    parser.add_argument('-p', '--port', help='SmartSocks server port')
+    parser.add_argument('-u', '--user', help='SmartSocks user',
+                        default="admin")
+    parser.add_argument('-P', '--password', help='SmartSocks password',
+                        default="smartsocks")
+    parser.add_argument('-V', '--version', action='store_true',
+                        help='Show the version number and exit')
+
+    options = parser.parse_args()
+    if isinstance(options, tuple):
+        args = options[0]
     else:
-        run()
+        args = options
+    return args
+
+
+def main():
+    args = parse_args()
+    run(port=args.port, username=args.user, password=args.password)
+
+
+if __name__ == "__main__":
+    main()
