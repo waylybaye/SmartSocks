@@ -1,7 +1,16 @@
 FROM v2ray/official
-FROM breakwa11/shadowsocksr
-
 MAINTAINER HyperApp <hyperappcloud@gmail.com>
+
+ARG BRANCH=manyuser
+ARG WORK=/root
+
+RUN apk --no-cache add python \
+    libsodium \
+    wget
+
+RUN wget -qO- --no-check-certificate https://github.com/shadowsocksr/shadowsocksr/archive/$BRANCH.tar.gz | tar -xzf - -C $WORK
+
+
 
 ENV SMART_PORT 8000
 ENV USERNMAE admin
