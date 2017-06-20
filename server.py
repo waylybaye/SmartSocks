@@ -1,4 +1,5 @@
 #!/bin/env python
+from __future__ import unicode_literals
 import os
 import json
 import atexit
@@ -6,33 +7,26 @@ import signal
 import base64
 import subprocess
 
-import SocketServer
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 
 
 def socks_command(payload):
-    return "ss-server -k pass -m chacha20 -u -p 1080"
-    supported_servers = ['ss', 'ssr', 'v2ray']
-    ports = os.environ.get('PORTS')
-    servers = os.environ.get('SERVERS', '').strip().split(',') or ['ss', 'ssr', '']
+    server = payload['server']
+    port = payload['port']
 
-    if not ports:
-        print("PORTS required")
-        return
+    if server == 'shadowsocksr':
+        path = "python /root/shadowsocksr-manyuser/shadowsocks/server.py "
+        options = "-k '%(password)s' -m '%(encrypt)s' -u -p %(port)s -o %(obfs)s -O %(protocol)s" % payload
+        command = path + options
 
-    elif not ''.join(ports.split(',')).isdigit():
-        print("PORTS must be interger")
-        return
+    elif server == 'v2ray':
+        command = "v2ray -c "
 
-    if set(servers) - set(supported_servers):
-        print("Unsupported server: ", ','.join(set(servers) - set(supported_servers)))
-        return
+    else:
+        raise ValueError("Unsupported socks server")
 
-    ports = ports.split(',')
-
-    for server in servers:
-        for port in ports:
-            start_server(server, port)
+    print("COMMAND:", command)
+    return command
 
 
 class Server(BaseHTTPRequestHandler):
@@ -87,12 +81,14 @@ class Server(BaseHTTPRequestHandler):
         content_length = int(self.headers.get('content-length', '0'))
         payload = self.rfile.read(content_length)
         if not payload:
+            print("No Payload")
             self.response(406, "Payload required.")
             return
 
         try:
             payload = json.loads(payload)
         except ValueError:
+            print("Payload invalid json")
             self.response(406, "Payload invalid.")
             return
 
@@ -120,9 +116,10 @@ class Server(BaseHTTPRequestHandler):
         atexit.register(popen.terminate)
 
         Server.latest_process = popen
+        self.response(200, "Started")
 
-        self._set_headers()
-        self.wfile.write("<html><body><h1>POST!</h1></body></html>")
+        # self._set_headers()
+        # self.wfile.write("<html><body><h1>POST!</h1></body></html>")
 
 
 def run(server_class=HTTPServer, handler_class=Server, port=80, username="", password=""):
@@ -131,7 +128,7 @@ def run(server_class=HTTPServer, handler_class=Server, port=80, username="", pas
     handler_class.password = password
     httpd = server_class(server_address, handler_class)
     # print 'Starting SmartSocks ...'
-    print '[SmarkSocks] Waiting for clients ...'
+    print('[SmarkSocks] Waiting for clients ...')
     httpd.serve_forever()
 
 
