@@ -1,7 +1,14 @@
+#!/bin/env python
 # encoding: utf8
+from __future__ import unicode_literals, print_function
+
+import base64
+import json
 import os
 import socket
 import subprocess
+import urllib
+import urllib2
 
 import socks
 import speedtest
@@ -36,30 +43,48 @@ suggested_plans = {
 }
 
 
+def start_socks(server, port, username, password, socks, params):
+    query = {
+        'server': socks,
+    }
+    query.update(params)
+    request = urllib2.Request('http://%s:%s/socks' % (server, port), json.dumps(query))
+    if username and password:
+        auth = base64.encodestring('%s:%s' % (username, password))
+        request.add_header('Authorization', 'Basic %s' % auth.strip())
+    request.add_header('Content-Type', 'application/json')
+    response = urllib2.urlopen(request)
+    print(response.read())
+
+
 def main():
+    args = parse_args()
     socket.socket = socks.socksocket
-    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 1987)
 
     servers = []
     # If you want to test against a specific server
     # servers = [1234]
 
+    start_socks(args.server, args.port, args.user, args.password, 'shadowsocksr', {'protocol': 'auth_chain_a'})
+
+    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 1987)
     s = speedtest.Speedtest()
     print("Fetch servers ...")
     s.get_servers(servers)
     print("Test closest server ...")
     s.get_best_server()
-
     print('Hosted by %(sponsor)s (%(name)s) [%(d)0.2f km]: %(latency)s ms' % s.results.server)
-    s.download()
 
-    results = s.results
-    # results_dict = s.results.dict()
-    print('Ping: %s ms\nDownload: %0.2f Mbps\nUpload: %0.2f Mbps' %
-           (results.ping,
-            (results.download / 1000.0 / 1000.0),
-            (results.upload / 1000.0 / 1000.0),
-            ))
+    for x in range(3):
+        s.download()
+
+        results = s.results
+        # results_dict = s.results.dict()
+        print('Ping: %s ms\nDownload: %0.2f Mbps\nUpload: %0.2f Mbps' %
+               (results.ping,
+                (results.download / 1000.0 / 1000.0),
+                (results.upload / 1000.0 / 1000.0),
+                ))
     return
 
     for server, plans in suggested_plans.items():
@@ -71,6 +96,7 @@ def main():
 
 
 def parse_args():
+    description = "SmartSocks"
     parser = ArgParser(description=description)
     # Give optparse.OptionParser an `add_argument` method for
     # compatibility with argparse.ArgumentParser
@@ -79,12 +105,11 @@ def parse_args():
     except AttributeError:
         pass
 
-    parser.add_argument('--server', help='SmartSocks server')
-    parser.add_argument('--port', help='SmartSocks port')
-    parser.add_argument('--user', help='SmartSocks user')
-    parser.add_argument('--password', help='SmartSocks password')
-    parser.add_argument('--timeout', default=10, type=PARSER_TYPE_INT,
-                        help='HTTP timeout in seconds. Default 10')
+    parser.add_argument('-s', '--server', help='SmartSocks server', required=True)
+    parser.add_argument('-p', '--port', help='SmartSocks port')
+    parser.add_argument('-u', '--user', help='SmartSocks user')
+    parser.add_argument('-P', '--password', help='SmartSocks password')
+    parser.add_argument('-S', '--socks-port', help='SmartSocks port')
     # parser.add_argument('--version', action='store_true',
                         # help='Show the version number and exit')
     # parser.add_argument('--debug', action='store_true',
@@ -100,4 +125,3 @@ def parse_args():
 
 if __name__ == '__main__':
     main()
-    args = parse_args()
