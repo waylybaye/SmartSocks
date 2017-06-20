@@ -221,7 +221,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
 
     print(darkgrey + "Starting %s client" % socks_server)
     if socks_server == 'shadowsocksr':
-        command = 'python ../../code/shadowsocksr/shadowsocks/local.py -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
+        command = 'python shadowsocksr/shadowsocks/local.py -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
             server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
 
@@ -236,7 +236,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
         config['outbound']['streamSettings']['tcpSettings']['header']['type'] = params['obfs']
 
         config_file.write(json.dumps(config, indent=2))
-        command = 'v2ray -config ' + config_path
+        command = './v2ray -config ' + config_path
         # print("客户端:", orange, command, reset)
         print(darkgrey + "[CLIENT]", command, reset)
     else:
@@ -259,6 +259,10 @@ def main():
     args = parse_args()
     if args.version:
         print(__VERSION__)
+        return
+
+    if not args.server or not args.port:
+        print(red + "server and port is required", reset)
         return
 
     speed = None
@@ -350,8 +354,10 @@ def parse_args():
 
     parser.add_argument('-s', '--server', help='SmartSocks server')
     parser.add_argument('-p', '--port', help='SmartSocks port')
-    parser.add_argument('-u', '--user', help='SmartSocks user')
-    parser.add_argument('-P', '--password', help='SmartSocks password')
+    parser.add_argument('-u', '--user', help='SmartSocks user',
+                        default='admin')
+    parser.add_argument('-P', '--password', help='SmartSocks password',
+                        default='smartsocks')
     parser.add_argument('-S', '--socks-port', help='SmartSocks port', default=8848)
     parser.add_argument('-V', '--version', action='store_true',
                         help='Show the version number and exit')
