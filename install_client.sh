@@ -1,6 +1,16 @@
 V2RAY_VER="2.33.1"
 DIRECTORY="smartsocks"
 
+case "$(uname -s)" in
+    Darwin)
+        V2RAY_PLATFORM="macos"
+     ;;
+
+    Linux)
+        V2RAY_PLATFORM="linux-64"
+    ;;
+esac
+
 if ! [ -d $DIRECTORY ]; then
   echo "[SmartSocks] Make directory ./$DIRECTORY"
   mkdir $DIRECTORY
@@ -15,9 +25,9 @@ fi
 
 if ! [ -f v2ray ]; then
   echo "[SmartSocks] Downloading V2Ray ${V2RAY_VER} ..."
-  curl -o v2ray.zip -L https://github.com/v2ray/v2ray-core/releases/download/v${V2RAY_VER}/v2ray-macos.zip || exit 1
+  curl -o v2ray.zip -L https://github.com/v2ray/v2ray-core/releases/download/v${V2RAY_VER}/v2ray-${V2RAY_PLATFORM}.zip || exit 1
   unzip v2ray.zip -d tmp
-  mv tmp/v2ray-v${V2RAY_VER}-macos/v2ray v2ray
+  mv tmp/v2ray-v${V2RAY_VER}-${V2RAY_PLATFORM}/v2ray v2ray
   chmod +x v2ray
   rm -rf tmp
   rm v2ray.zip
