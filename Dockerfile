@@ -1,5 +1,5 @@
-FROM breakwa/shadowsocksr
 FROM v2ray/official
+FROM breakwa11/shadowsocksr
 
 MAINTAINER HyperApp <hyperappcloud@gmail.com>
 
@@ -8,7 +8,6 @@ ENV USERNMAE admin
 ENV PASSWORD smartsocks
 EXPOSE $SMART_PORT
 
-RUN ln -s /root/shadowsocksr-manyuser/shadowsocks/server.py /usr/local/bin/ss-server
 ADD server.py /usr/local/bin/smart-server
 ADD ss-server.sh /usr/local/bin/ss-server
 
