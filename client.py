@@ -81,7 +81,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
 
     print("Starting %s client" % socks_server)
     if socks_server == 'shadowsocksr':
-        command = 'python ../../code/shadowsocksr/shadowsocks/local.py -v -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
+        command = 'python ../../code/shadowsocksr/shadowsocks/local.py -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
             server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
         # print("客户端:", orange, command, reset)
@@ -104,7 +104,6 @@ def main():
     if args.version:
         print(__VERSION__)
         return
-
 
 
     speed = None

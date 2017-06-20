@@ -23,7 +23,7 @@ def socks_command(payload):
 
     if server == 'shadowsocksr':
         path = "python /root/shadowsocksr-manyuser/shadowsocks/server.py "
-        options = "-v -k '%(password)s' -m '%(encrypt)s' -p %(port)s -o %(obfs)s -O %(protocol)s" % payload
+        options = "-k '%(password)s' -m '%(encrypt)s' -p %(port)s -o %(obfs)s -O %(protocol)s" % payload
         command = path + options
 
     elif server == 'v2ray':
