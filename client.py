@@ -51,6 +51,12 @@ suggested_plans = {
             'encrypt': 'none',
             'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
         },
+        {
+            'name': 'ShadowsocksR [chacha20, rc4-md5] + auth_aes128_md5 * OBFS',
+            'protocol': 'auth_aes128_md5',
+            'encrypt': ['chacha20', 'rc4-md5'],
+            'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
+        }
     ]
 }
 
@@ -68,7 +74,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
         auth = base64.encodestring('%s:%s' % (username, password))
         request.add_header('Authorization', 'Basic %s' % auth.strip())
 
-    print('[DEBUG]', query)
+    print(darkgrey + '[SERVER]', query, reset)
     request.add_header('Content-Type', 'application/json')
     response = urllib2.urlopen(request)
     response.read()
@@ -85,7 +91,7 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
             server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
         # print("客户端:", orange, command, reset)
-        print("客户端:", command)
+        print(darkgrey + "[CLIENT]", command, reset)
 
         process = subprocess.Popen(
             command,
@@ -105,7 +111,6 @@ def main():
         print(__VERSION__)
         return
 
-
     speed = None
     speedtest_servers = []
 
@@ -113,7 +118,7 @@ def main():
         print("代理软件:", green, socks_server, reset)
         for plan in plans:
             print("测试配置:", green, plan['name'], reset)
-            print('=' * 80)
+            print(darkgrey + '=' * 80, reset)
             data = dict(plan.items())
             data.pop('name')
 
@@ -140,7 +145,7 @@ def main():
                     )
                 except urllib2.HTTPError:
                     print(red + 'ERROR: Failed to start socks on server', reset)
-                    print('-' * 80)
+                    print(darkgrey + '-' * 80, reset)
                     continue
 
                 for x in range(20):
@@ -158,34 +163,27 @@ def main():
                 else:
                     print(red + 'Client no response ...', reset)
 
-                # print('get ip')
-                # url = 'http://ifconfig.me/ip'
-                # request = urllib2.Request(url)
-                # request.add_header('Cache-Control', 'max-age=0')
-                # response = urllib2.urlopen(request)
-                # print(response.read())
-
                 try:
                     if not speedtest_servers:
                         speed = speedtest.Speedtest()
-                        print("[SPEEDTEST] Fetch servers ...")
+                        print(darkgrey + "[SPEEDTEST] Fetch servers ...", reset)
                         speed.get_servers(speedtest_servers)
-                        print("[SPEEDTEST] Choose closest server ...")
+                        print(darkgrey + "[SPEEDTEST] Choose closest server ...", reset)
                         speed.get_best_server()
-                        print('[SPEEDTEST] Hosted by %(sponsor)s (%(name)s) [%(d)0.2f km]: %(latency)s ms' % speed.results.server)
+                        print(darkgrey + '[SPEEDTEST] Hosted by %(sponsor)s (%(name)s) [%(d)0.2f km]: %(latency)s ms' % speed.results.server, reset)
 
                     speed.download()
                     results = speed.results
-                    print('[SPEEDTEST] Ping: %s ms\nDownload: %0.2f Mbps\nUpload: %0.2f Mbps' %
+                    print(green + '[SPEEDTEST] Ping: %s ms\tDownload: %0.2f Mbps\tUpload: %0.2f Mbps' %
                           (results.ping,
                            (results.download / 1000.0 / 1000.0),
                            (results.upload / 1000.0 / 1000.0),
-                           ))
+                           ), reset)
 
                 except (speedtest.SpeedtestException, httplib.HTTPException):
                     print("[SPEEDTEST]", red, 'ERROR: Failed to connect', reset)
 
-                print('-' * 80)
+                print(darkgrey + '-' * 80, reset)
 
     return
 
