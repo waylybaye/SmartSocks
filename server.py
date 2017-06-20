@@ -123,7 +123,7 @@ def socks_command(payload):
         config_path = tempfile.mktemp('.json')
         config_file = open(config_path, 'w')
         config = copy.deepcopy(V2Ray_CONFIG)
-        config['inbound']['port'] = payload['port']
+        config['inbound']['port'] = int(payload['port'])
         config['inbound']['settings']['clients'][0]['id'] = payload['uuid']
         config['inbound']['streamSettings']['network'] = payload['network']
 

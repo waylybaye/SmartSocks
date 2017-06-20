@@ -2,8 +2,10 @@
 # encoding: utf8
 from __future__ import unicode_literals, print_function
 
+import copy
 import os
 import json
+import tempfile
 import time
 import uuid
 import atexit
@@ -44,6 +46,123 @@ cyan = '\033[36m'
 lightgrey = '\033[37m'
 darkgrey = '\033[90m'
 
+V2Ray_CONFIG = {
+    "outboundDetour": [
+        {
+            "protocol": "freedom",
+            "tag": "direct",
+            "settings": {
+            }
+        }
+    ],
+    "inbound": {
+        "listen": "127.0.0.1",
+        "port": LOCAL_PORT,
+        "protocol": "socks",
+        "settings": {
+            "ip": "127.0.0.1",
+            "auth": "noauth"
+        },
+        "allowPassive": False
+    },
+    "routing": {
+        "strategy": "rules",
+        "settings": {
+            "domainStrategy": "IPIfNonMatch",
+            "rules": [
+                {
+                    "port": "1-52",
+                    "type": "field",
+                    "outboundTag": "direct"
+                },
+                {
+                    "port": "54-79",
+                    "type": "field",
+                    "outboundTag": "direct"
+                },
+                {
+                    "port": "81-442",
+                    "type": "field",
+                    "outboundTag": "direct"
+                },
+                {
+                    "port": "444-65535",
+                    "type": "field",
+                    "outboundTag": "direct"
+                },
+                {
+                    "type": "field",
+                    "ip": [
+                        "0.0.0.0/8",
+                        "10.0.0.0/8",
+                        "100.64.0.0/10",
+                        "127.0.0.0/8",
+                        "169.254.0.0/16",
+                        "172.16.0.0/12",
+                        "192.0.0.0/24",
+                        "192.0.2.0/24",
+                        "192.168.0.0/16",
+                        "198.18.0.0/15",
+                        "198.51.100.0/24",
+                        "203.0.113.0/24",
+                        "::1/128",
+                        "fc00::/7",
+                        "fe80::/10"
+                    ],
+                    "outboundTag": "direct"
+                }
+            ]
+        }
+    },
+    "log": {
+        "loglevel": "warning",
+        "access": "/dev/stdout",
+        "error": "/dev/stderr"
+    },
+    "outbound": {
+        "protocol": "vmess",
+        "streamSettings": {
+            "network": "tcp",
+            "tcpSettings": {
+                "header": {
+                    "type": "http"
+                },
+                "connectionReuse": True
+            },
+            # "kcpSettings": {
+            #     "header": {
+            #         "type": "none"
+            #     },
+            # },
+            # "security": "tls",
+            "security": "none",
+            # "tlsSettings": {
+            #     "allowInsecure": false
+            # },
+            "wsSettings": {
+                "path": "",
+                "connectionReuse": False
+            }
+        },
+        "settings": {
+            "vnext": [
+                {
+                    "address": "",
+                    "port": 0,
+                    "users": [
+                        {
+                            "id": "",
+                            "alterId": 64,
+                            "security": "aes-128-cfb"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
+
+
 suggested_plans = {
     # 'shadowsocksr': [
     #     {
@@ -66,12 +185,12 @@ suggested_plans = {
             'network': 'tcp',
             'obfs': ['none', 'http']
         },
-        {
-            'name': 'V2Ray VMess kcp',
-            'uuid': str(uuid.uuid4()),
-            'network': 'kcp',
-            'obfs': 'none',
-        }
+        # {
+        #     'name': 'V2Ray VMess kcp',
+        #     'uuid': str(uuid.uuid4()),
+        #     'network': 'kcp',
+        #     'obfs': 'none',
+        # }
     ]
 }
 
@@ -105,19 +224,34 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
         command = 'python ../../code/shadowsocksr/shadowsocks/local.py -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
             server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
+    elif socks_server == 'v2ray':
+        config_path = tempfile.mktemp('.json')
+        config_file = open(config_path, 'w')
+        config = copy.deepcopy(V2Ray_CONFIG)
+        config['outbound']['settings']['vnext'][0]['address'] = server
+        config['outbound']['settings']['vnext'][0]['port'] = int(socks_port)
+        config['outbound']['settings']['vnext'][0]['users'][0]['id'] = params['uuid']
+        config['outbound']['streamSettings']['network'] = params['network']
+        config['outbound']['streamSettings']['tcpSettings']['header']['type'] = params['obfs']
+
+        config_file.write(json.dumps(config, indent=2))
+        command = 'v2ray -config ' + config_path
         # print("客户端:", orange, command, reset)
         print(darkgrey + "[CLIENT]", command, reset)
+    else:
+        raise ValueError('')
 
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            shell=True,
-            preexec_fn=os.setsid
-        )
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+        preexec_fn=os.setsid
+    )
 
-        atexit.register(process.terminate)
+    atexit.register(process.terminate)
 
-        LATEST_PROCESS = process
+    LATEST_PROCESS = process
 
 
 def main():
@@ -197,7 +331,7 @@ def main():
                            ), reset)
 
                 except (speedtest.SpeedtestException, httplib.HTTPException):
-                    print("[SPEEDTEST]", red, 'ERROR: Failed to connect', reset)
+                    print(darkgrey + "[SPEEDTEST]", red + 'ERROR: Failed to connect', reset)
 
                 print(darkgrey + '-' * 80, reset)
 
