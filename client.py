@@ -14,6 +14,8 @@ import urllib2
 
 import itertools
 
+import time
+
 import socks
 import speedtest
 
@@ -137,6 +139,19 @@ def main():
                     print(red + 'ERROR: Failed to start socks on server', reset)
                     print('-' * 80)
                     continue
+
+                for x in range(20):
+                    sock = socket.socket()
+                    try:
+                        sock.connect(('127.0.0.1', LOCAL_PORT))
+                        sock.close()
+                        print(green + 'Client started ...', reset)
+                        break
+                    except:
+                        time.sleep(0.1)
+                        continue
+                else:
+                    print(red + 'Client no response ...', reset)
 
                 socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", LOCAL_PORT)
 
