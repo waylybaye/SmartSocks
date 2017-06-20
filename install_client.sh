@@ -23,9 +23,9 @@ if ! [ -f v2ray ]; then
 fi
 
 echo "[SmartSocks] Downloading SmartSocks client ..."
-curl https://raw.githubusercontent.com/waylybaye/SmartSocks/master/client.py > client.py
-curl https://raw.githubusercontent.com/waylybaye/SmartSocks/master/socks.py > socks.py
-curl https://raw.githubusercontent.com/waylybaye/SmartSocks/master/speedtest.py > speedtest.py
+curl -s https://raw.githubusercontent.com/waylybaye/SmartSocks/master/client.py > client.py
+curl -s https://raw.githubusercontent.com/waylybaye/SmartSocks/master/socks.py > socks.py
+curl -s https://raw.githubusercontent.com/waylybaye/SmartSocks/master/speedtest.py > speedtest.py
 
 echo "========================"
 echo "Usage: python client.py"
