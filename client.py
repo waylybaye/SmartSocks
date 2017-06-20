@@ -13,6 +13,7 @@ import base64
 import signal
 import itertools
 import subprocess
+from collections import OrderedDict
 
 LOCAL_PORT = 1117
 
@@ -163,8 +164,8 @@ V2Ray_CONFIG = {
 }
 
 
-suggested_plans = {
-    'shadowsocksr': [
+suggested_plans = OrderedDict([
+    ('shadowsocksr', [
         {
             'name': 'ShadowsocksR auth_chain_a + none * OBFS',
             'protocol': 'auth_chain_a',
@@ -177,10 +178,10 @@ suggested_plans = {
             'encrypt': ['chacha20', 'rc4-md5'],
             'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
         }
-    ],
-    'v2ray': [
+    ]),
+    ('v2ray', [
         {
-            'name': 'V2Ray VMess tcp * [none, http]',
+            'name': 'V2Ray VMess tcp * [none, http] obfs',
             'uuid': str(uuid.uuid4()),
             'network': 'tcp',
             'obfs': ['none', 'http']
@@ -191,11 +192,12 @@ suggested_plans = {
             'network': 'kcp',
             'obfs': 'none',
         }
-    ]
-}
+    ])
+])
 
 
 def start_socks(server, port, socks_port, username, password, socks_server, params):
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     global LATEST_PROCESS
     query = {
         'port': socks_port,
@@ -219,10 +221,11 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
         except OSError:
             pass
 
-    print(darkgrey + "Starting %s client" % socks_server)
+    print(darkgrey + "Starting %s client:" % socks_server)
     if socks_server == 'shadowsocksr':
-        command = 'python shadowsocksr/shadowsocks/local.py -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
-            server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
+        path = os.path.join(BASE_DIR, 'shadowsocksr/shadowsocks/local.py')
+        command = 'python %s  -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
+            path, server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
 
     elif socks_server == 'v2ray':
@@ -236,12 +239,12 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
         config['outbound']['streamSettings']['tcpSettings']['header']['type'] = params['obfs']
 
         config_file.write(json.dumps(config, indent=2))
-        command = './v2ray -config ' + config_path
-        # print("客户端:", orange, command, reset)
+        command = os.path.join(BASE_DIR, 'v2ray') + ' -config ' + config_path
         print(darkgrey + "[CLIENT]", command, reset)
     else:
         raise ValueError('')
 
+    print(darkgrey + command + reset)
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -297,17 +300,23 @@ def main():
                         socks_server,
                         payload,
                     )
-                except urllib2.HTTPError:
+                except urllib2.HTTPError as e:
+                    if e.code == 401:
+                        print(red + 'ERROR: Invalid username or password', reset)
+                        return
+
                     print(red + 'ERROR: Failed to start socks on server', reset)
                     print(darkgrey + '-' * 80, reset)
-                    continue
+                    # print(e.code, e.reason)
+                    # print(dir(e))
+                    return
 
                 for x in range(20):
                     sock = raw_socket()
                     try:
-                        sock.connect(('127.0.0.1', LOCAL_PORT))
+                        sock.connect(('localhost', LOCAL_PORT))
                         sock.close()
-                        print(green + 'Client started ...', reset)
+                        print(green + 'Local port started ...', reset)
                         socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "localhost", LOCAL_PORT)
                         time.sleep(0.2)
                         break
