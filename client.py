@@ -14,7 +14,7 @@ import signal
 import itertools
 import subprocess
 
-LOCAL_PORT = 1118
+LOCAL_PORT = 1117
 
 import socks
 import socket
@@ -164,20 +164,20 @@ V2Ray_CONFIG = {
 
 
 suggested_plans = {
-    # 'shadowsocksr': [
-    #     {
-    #         'name': 'ShadowsocksR auth_chain_a + none * OBFS',
-    #         'protocol': 'auth_chain_a',
-    #         'encrypt': 'none',
-    #         'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
-    #     },
-    #     {
-    #         'name': 'ShadowsocksR [chacha20, rc4-md5] + auth_aes128_md5 * OBFS',
-    #         'protocol': 'auth_aes128_md5',
-    #         'encrypt': ['chacha20', 'rc4-md5'],
-    #         'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
-    #     }
-    # ],
+    'shadowsocksr': [
+        {
+            'name': 'ShadowsocksR auth_chain_a + none * OBFS',
+            'protocol': 'auth_chain_a',
+            'encrypt': 'none',
+            'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
+        },
+        {
+            'name': 'ShadowsocksR [chacha20, rc4-md5] + auth_aes128_md5 * OBFS',
+            'protocol': 'auth_aes128_md5',
+            'encrypt': ['chacha20', 'rc4-md5'],
+            'obfs': ['plain', 'http_simple', 'tls1.2_ticket_auth']
+        }
+    ],
     'v2ray': [
         {
             'name': 'V2Ray VMess tcp * [none, http]',
@@ -185,12 +185,12 @@ suggested_plans = {
             'network': 'tcp',
             'obfs': ['none', 'http']
         },
-        # {
-        #     'name': 'V2Ray VMess kcp',
-        #     'uuid': str(uuid.uuid4()),
-        #     'network': 'kcp',
-        #     'obfs': 'none',
-        # }
+        {
+            'name': 'V2Ray VMess kcp',
+            'uuid': str(uuid.uuid4()),
+            'network': 'kcp',
+            'obfs': 'none',
+        }
     ]
 }
 
@@ -219,11 +219,12 @@ def start_socks(server, port, socks_port, username, password, socks_server, para
         except OSError:
             pass
 
-    print("Starting %s client" % socks_server)
+    print(darkgrey + "Starting %s client" % socks_server)
     if socks_server == 'shadowsocksr':
         command = 'python ../../code/shadowsocksr/shadowsocks/local.py -s %s -p %s -k %s -m %s -O %s -o %s -l %s' % (
             server, socks_port, password, params['encrypt'], params['protocol'], params['obfs'], LOCAL_PORT
         )
+
     elif socks_server == 'v2ray':
         config_path = tempfile.mktemp('.json')
         config_file = open(config_path, 'w')
@@ -303,7 +304,7 @@ def main():
                         sock.connect(('127.0.0.1', LOCAL_PORT))
                         sock.close()
                         print(green + 'Client started ...', reset)
-                        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", LOCAL_PORT)
+                        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "localhost", LOCAL_PORT)
                         time.sleep(0.2)
                         break
                     except socket.error:
@@ -314,7 +315,7 @@ def main():
                     continue
 
                 try:
-                    if not speedtest_servers:
+                    if not speed:
                         speed = speedtest.Speedtest()
                         print(darkgrey + "[SPEEDTEST] Fetch servers ...", reset)
                         speed.get_servers(speedtest_servers)
@@ -322,6 +323,7 @@ def main():
                         speed.get_best_server()
                         print(darkgrey + '[SPEEDTEST] Hosted by %(sponsor)s (%(name)s) [%(d)0.2f km]: %(latency)s ms' % speed.results.server, reset)
 
+                    print(darkgrey + "[SPEEDTEST] Downloading ...", reset)
                     speed.download()
                     results = speed.results
                     print(green + '[SPEEDTEST] Ping: %s ms\tDownload: %0.2f Mbps\tUpload: %0.2f Mbps' %
