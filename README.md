@@ -1,5 +1,9 @@
 # SmartSock
 
+
+DEPRECATION WARNING: NO LONGER BEING MAINTAINED
+----
+
 helps you automatically setup and choose the fastest socks server.
 
 SmartSocks 是一个服务端和客户端自动协商最快传输协议的工具。客户端会自动尝试 SSR/V2Ray 推荐的配置组合，然后使用 `speedtest` 来测速。
